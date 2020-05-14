@@ -1,17 +1,18 @@
 //form section
 var searches = JSON.parse(localStorage.getItem("searches")) || [];
-function renderHistory() {
-  $("#history").empty();
 
-  for (var i = 0; i < searches.length; i++) {
-    $("#history").prepend($("<p class='city'>").text(searches[i]));
-  }
+function renderHistory() {
+  $("#history").html("");
+
+  searches.forEach(function(e) {
+    $("#history").prepend($("<p>").text(e).addClass("city"));
+  })
 }
 
 $("form").on("submit", function (event) {
   event.preventDefault();
-  query($("#city").val())
   var city = $("#city").val().trim();
+  query(city);
   searches.push(city);
   
 
@@ -22,15 +23,17 @@ $("form").on("submit", function (event) {
 });
 
 $(document).on("click", ".city", function () {
-  console.log($(this).text());
+  query($(this).text());
 });
 renderHistory();
 
-//localStorage.clear();
+
 
 //api data section
 
 function query(city) {
+  $("#fiveDayDisplay").empty();
+  $("#fiveDayTitle").empty();
   $.ajax({
     url: "https://api.openweathermap.org/data/2.5/weather?q=" + city + "&units=imperial&appid=c9c478a157f268c22eedc9b26117af86",
     method: "GET",
@@ -42,17 +45,32 @@ function query(city) {
     $(".humidity").text("Humidity: " + response.main.humidity);
     $(".wind").text("Wind Speed: " + response.wind.speed);
   });
-
+  //using ajax to access api and use information for the 5 day forecast
    $.ajax({
     url: "https://api.openweathermap.org/data/2.5/forecast?q=" + city + "&units=imperial&appid=c9c478a157f268c22eedc9b26117af86",
     method: "GET",
     }).then(function (response) {
     console.log(response);
-    var fiveDay = [response.list[4], reponse.list[12], response.list[20], response.list[28], response.list[36]]
-    var fiveText = $("<h2>").text("5 day forecast")
-    $("#display").append(fiveText)
+    var fiveDay = [response.list[4], response.list[12], response.list[20], response.list[28], response.list[36]]
+    var fiveText = $("<h2>").text("5 day Forecast:")
+    $("#fiveDayTitle").append(fiveText)
+    fiveDay.forEach(function(fiveArray){
+      var fiveDiv = $("<div>").addClass("eachday")
+      var fiveDate = $("<p>").text(fiveArray.dt_txt.split(" ")[0]);
+      var fiveIcon = $("<img>").attr("src", "http://openweathermap.org/img/wn/" + fiveArray.weather[0].icon + "@2x.png")
+      var fiveTemp = $("<p>").text("Temperature: " +Math.floor(fiveArray.main.temp))
+      var fiveHumid = $("<p>").text("Humidity: " + fiveArray.main.humidity +"%")
+      fiveDiv.append( fiveDate, fiveIcon, fiveTemp, fiveHumid);
+
+      $("#fiveDayDisplay").append(fiveDiv)
+  
+  
+     })
 
   });
+
+
+      
 
 }
 
